@@ -1,11 +1,11 @@
 import React, { useState, useEffect, FC, createContext, useContext, ReactNode } from 'react';
 import { PermissionsAndroid } from 'react-native';
-import * as GetLocation from 'react-native-get-location';
-import FileSystem from 'expo-file-system';
+import GetLocation, { Location } from 'react-native-get-location';
+import RNFS from 'react-native-fs';
 
 interface LocationContextProps {
   getReactNativeLocation: () => void
-  location: any,  
+  location: Location,
   changeGetLocationMethod: () => void
 }
 
@@ -18,7 +18,7 @@ export const useLocationContext = () => useContext(LocationContext)
 
 const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
   const [useNative, setUseNative] = useState(true);
-  const [location, setLocation] = useState(null);
+  const [location, setLocation] = useState({} as Location);
 
   const requestPermissions = async () => {
       await PermissionsAndroid.request(
@@ -53,19 +53,27 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
     }
   };
 
-  const saveLocation = async (location) => {
-    const filePath = `${FileSystem.documentDirectory}/locations.json`;
+  const saveLocation = async (location: Location) => {
+    const filePath = `${RNFS.DocumentDirectoryPath}/locations.json`;
     const timestamp = new Date().toDateString();
-    const newLocation = { timestamp, ...location.coords };
+    const { latitude, longitude} = location
+    const newLocation = { timestamp, latitude, longitude };
 
     setLocation(location);
 
     try {
-      const contents = await FileSystem.readAsStringAsync(filePath);
-      const data = JSON.parse(contents);
-      
-      data.push(newLocation);
-      await FileSystem.writeAsStringAsync(filePath, JSON.stringify(data));
+      const fileExists = await RNFS.exists(filePath);
+
+      if (!fileExists) {
+        await RNFS.writeFile(filePath, JSON.stringify([newLocation]), 'utf8');
+      } else {
+        const fileContent = await RNFS.readFile(filePath);
+        const locations = JSON.parse(fileContent);
+
+        locations.push(newLocation);
+
+        await RNFS.writeFile(filePath, JSON.stringify(locations), 'utf8');
+      }
     } catch (error) {
         console.warn(error);
     }
