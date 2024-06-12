@@ -3,7 +3,7 @@ import { PermissionsAndroid, NativeModules } from 'react-native';
 import GetLocation, { Location } from 'react-native-get-location';
 import { Dirs, FileSystem } from 'react-native-file-access';
 
-const { LocationModule } = NativeModules;
+const { LocationModule, LockDetector } = NativeModules;
 
 interface LocationContextProps {
   location: Location,
@@ -43,6 +43,7 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
     if (!useNative) {
       await GetLocation.getCurrentPosition({
         enableHighAccuracy: true,
+        timeout: 15000
       })
         .then(location => {
           saveLocation(location);
@@ -68,6 +69,9 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
     const timestamp = new Date();
     const { latitude, longitude} = location
     const newLocation = { timestamp, latitude, longitude };
+    const isLocked = await LockDetector.isDeviceLocked();
+
+    console.log(isLocked)
 
     setLocation(location);
 

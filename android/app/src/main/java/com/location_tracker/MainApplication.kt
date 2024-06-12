@@ -10,15 +10,14 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
-import android.util.Log
 
 class MainApplication : Application(), ReactApplication {
-
   override val reactNativeHost: ReactNativeHost =
       object : DefaultReactNativeHost(this) {
         override fun getPackages(): List<ReactPackage> =
             PackageList(this).packages.apply {
                 add(LocationPackage())
+                add(LockDetectorPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"
