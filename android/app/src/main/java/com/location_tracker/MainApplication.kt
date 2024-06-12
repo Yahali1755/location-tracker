@@ -10,18 +10,16 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
-import com.rnfs.RNFSPackage;
+import android.util.Log
 
 class MainApplication : Application(), ReactApplication {
 
   override val reactNativeHost: ReactNativeHost =
       object : DefaultReactNativeHost(this) {
-        override fun getPackages(): List<ReactPackage> = {
-          val packages = PackageList(this).packages
-          // Manually add packages that cannot be autolinked
-          packages.add(RNFSPackage()) // Corrected instantiation of RNFSPackage
-          return PackageList(this).packages
-        }
+        override fun getPackages(): List<ReactPackage> =
+            PackageList(this).packages.apply {
+                add(LocationPackage())
+            }
 
         override fun getJSMainModuleName(): String = "index"
 
@@ -35,7 +33,7 @@ class MainApplication : Application(), ReactApplication {
     get() = getDefaultReactHost(applicationContext, reactNativeHost)
 
   override fun onCreate() {
-    super.onCreate()
+      super.onCreate()
     SoLoader.init(this, false)
     if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
       // If you opted-in for the New Architecture, we load the native entry point for this app.
