@@ -1,10 +1,11 @@
 import React, { useState, useEffect, FC, createContext, useContext, ReactNode } from 'react';
-import { PermissionsAndroid } from 'react-native';
+import { PermissionsAndroid, NativeModules, AppState } from 'react-native';
 import GetLocation, { Location } from 'react-native-get-location';
 import RNFS from 'react-native-fs';
 
+const { LocationModule } = NativeModules;
+
 interface LocationContextProps {
-  getReactNativeLocation: () => void
   location: Location,
   changeGetLocationMethod: () => void
 }
@@ -31,25 +32,35 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
 
     const interval = setInterval(() => {
         if (useNative) {
-            getReactNativeLocation()
+            getLocation()
         }
     }, 5000);
 
     return () => clearInterval(interval);
   }, [useNative]);
 
-  const getReactNativeLocation = async () => {
-    if (useNative) {
+  const getLocation = async () => {
+    if (!useNative) {
       await GetLocation.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 15000,
       })
         .then(location => {
+          console.log(AppState.currentState)
           saveLocation(location);
         })
         .catch(error => {
-          console.warn(error);
+          console.error(error);
         });
+    }
+    else {
+      await LocationModule.getLocation()
+      .then((location: any) => {
+        saveLocation(location);
+      })
+      .catch((error: any) => {
+        console.error(error);
+      });
     }
   };
 
@@ -82,7 +93,7 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
   const changeGetLocationMethod = () => setUseNative(useNative => !useNative);
 
   return (
-    <LocationContext.Provider value={{getReactNativeLocation, changeGetLocationMethod, location}}>
+    <LocationContext.Provider value={{changeGetLocationMethod, location}}>
       { children }
     </LocationContext.Provider>
   );
