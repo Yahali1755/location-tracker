@@ -2,45 +2,60 @@ import React, { useState, useEffect, FC, createContext, useContext, ReactNode } 
 import { PermissionsAndroid, NativeModules } from 'react-native';
 import GetLocation, { Location } from 'react-native-get-location';
 import { Dirs, FileSystem } from 'react-native-file-access';
+import BackgroundTimer from "react-native-background-timer"
 
 const { LocationModule, LockDetector } = NativeModules;
 
 interface LocationContextProps {
-  location: Location,
-  changeGetLocationMethod: () => void
+  location?: FileLocation,
+  changeGetLocationMethod: () => void,
+  useNativeAndroidModule: boolean
 }
 
 interface LocationProviderProps {
   children: ReactNode
 }
 
-const LocationContext = createContext<LocationContextProps>({} as LocationContextProps)
-export const useLocationContext = () => useContext(LocationContext)
+interface BaseLocation {
+  latitude: number,
+  longitude: number,
+}
+
+interface FileLocation extends BaseLocation {
+  date: Date,
+  isLocked: boolean
+}
+
+const LocationContext = createContext<LocationContextProps>({} as LocationContextProps);
+export const useLocationContext = () => useContext(LocationContext);
 
 const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
-  const [useNative, setUseNative] = useState(true);
-  const [location, setLocation] = useState({} as Location);
+  const [useNativeAndroidModule, setUseNativeAndroidModule] = useState(true);
+  const [location, setLocation] = useState<FileLocation>();
+  const [intervalId, setIntervalId] = useState(0);
 
   const requestPermissions = async () => {
-      await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-      );
+      await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION,
+      ]);
   };
 
-  useEffect(() => {
-    requestPermissions();
+  const updateLocation = async () => {
+    const isLocked = await LockDetector.isDeviceLocked();
 
-    const interval = setInterval(() => {
-        if (useNative) {
-            getLocation()
-        }
-    }, 5000);
+    console.log(isLocked)
 
-    return () => clearInterval(interval);
-  }, [useNative]);
-
-  const getLocation = async () => {
-    if (!useNative) {
+    if (useNativeAndroidModule) {
+      await LocationModule.getLocation()
+      .then((location: Location) => {
+        saveLocation(location);
+      })
+      .catch((error: Error) => {
+        console.error(error);
+      });
+    }
+    else {
       await GetLocation.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 15000
@@ -52,33 +67,20 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
           console.error(error);
         });
     }
-    else {
-      await LocationModule.getLocation()
-      .then((location: any) => {
-        console.log(location)
-        saveLocation(location);
-      })
-      .catch((error: any) => {
-        console.error(error);
-      });
-    }
   };
 
-  const saveLocation = async (location: Location) => {
+  const saveLocation = async (location: BaseLocation) => {
     const filePath = `${Dirs.DocumentDir}/locations.json`;
-    const timestamp = new Date();
-    const { latitude, longitude} = location
-    const newLocation = { timestamp, latitude, longitude };
-    const isLocked = await LockDetector.isDeviceLocked();
+    const date = new Date();
+    const isLocked = await LockDetector.isDeviceLocked() as boolean;
+    const newLocation = { date, isLocked, ...location };
 
-    console.log(isLocked)
-
-    setLocation(location);
+    setLocation(newLocation);
 
     try {
-      const fileExists = await FileSystem.exists(filePath);
+      const doesFileExist = await FileSystem.exists(filePath);
 
-      if (!fileExists) {
+      if (!doesFileExist) {
         await FileSystem.writeFile(filePath, JSON.stringify([newLocation]), 'utf8');
       } else {
         const fileContent = await FileSystem.readFile(filePath);
@@ -89,14 +91,28 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
         await FileSystem.writeFile(filePath, JSON.stringify(locations), 'utf8');
       }
     } catch (error) {
-        console.warn(error);
+        console.error(error);
     }
   };
 
-  const changeGetLocationMethod = () => setUseNative(useNative => !useNative);
+  useEffect(() => {
+    requestPermissions();
+  }, [])
+
+  useEffect(() => {
+    BackgroundTimer.clearInterval(intervalId)
+
+     const interval = BackgroundTimer.setInterval(updateLocation, 5000);
+
+     setIntervalId(interval)
+
+     return () => BackgroundTimer.clearInterval(intervalId);
+   }, [useNativeAndroidModule]);
+
+  const changeGetLocationMethod = () => setUseNativeAndroidModule(useNative => !useNative);
 
   return (
-    <LocationContext.Provider value={{changeGetLocationMethod, location}}>
+    <LocationContext.Provider value={{changeGetLocationMethod, location, useNativeAndroidModule}}>
       { children }
     </LocationContext.Provider>
   );
