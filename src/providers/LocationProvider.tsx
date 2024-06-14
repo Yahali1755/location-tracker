@@ -1,7 +1,7 @@
 import React, { useState, useEffect, FC, createContext, useContext, ReactNode } from 'react';
-import { PermissionsAndroid, NativeModules } from 'react-native';
+import { PermissionsAndroid, NativeModules, AppState, Alert, Linking } from 'react-native';
 import GetLocation, { Location } from 'react-native-get-location';
-import { Dirs, FileSystem } from 'react-native-file-access';
+import { Dirs, FileSystem, getEx } from 'react-native-file-access';
 import BackgroundTimer from "react-native-background-timer"
 
 const { LocationModule, LockDetector } = NativeModules;
@@ -35,10 +35,21 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
   const [intervalId, setIntervalId] = useState(0);
 
   const requestPermissions = async () => {
-      await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION,
-      ]);
+    const permissions = await PermissionsAndroid.requestMultiple([
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION
+    ]);
+
+    const areAnyPermissionsDenied = Object.values(permissions).some(permission => permission!== PermissionsAndroid.RESULTS.GRANTED);
+
+    if (areAnyPermissionsDenied) {
+        Alert.alert(
+          'Insufficient Permissions',
+          'Please manually grant "Always Allow" location permission to continue.',
+          [{ text: 'OK', onPress: () => Linking.openSettings()}],
+          { cancelable: false }
+        );
+    }
   };
 
   const updateLocation = async () => {
@@ -96,7 +107,7 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    requestPermissions();
+      requestPermissions();
   }, [])
 
   useEffect(() => {
