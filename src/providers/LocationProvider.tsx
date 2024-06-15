@@ -1,8 +1,8 @@
 import React, { useState, useEffect, FC, createContext, useContext, ReactNode } from 'react';
-import { PermissionsAndroid, NativeModules, AppState, Alert, Linking } from 'react-native';
+import { PermissionsAndroid, NativeModules, Alert, Linking } from 'react-native';
 import GetLocation, { Location } from 'react-native-get-location';
-import { Dirs, FileSystem, getEx } from 'react-native-file-access';
-import BackgroundTimer from "react-native-background-timer"
+import { Dirs, FileSystem } from 'react-native-file-access';
+import Timer from "react-native-background-timer-android";
 
 const { LocationModule, LockDetector } = NativeModules;
 
@@ -80,11 +80,11 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
     }
   };
 
-  const saveLocation = async (location: BaseLocation) => {
+  const saveLocation = async ({ latitude, longitude }: BaseLocation) => {
     const filePath = `${Dirs.DocumentDir}/locations.json`;
     const date = new Date();
     const isLocked = await LockDetector.isDeviceLocked() as boolean;
-    const newLocation = { date, isLocked, ...location };
+    const newLocation = { date, isLocked, latitude, longitude };
 
     setLocation(newLocation);
 
@@ -111,14 +111,12 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
   }, [])
 
   useEffect(() => {
-    BackgroundTimer.clearInterval(intervalId)
+     Timer.setInterval(updateLocation, 5000);
 
-     const interval = BackgroundTimer.setInterval(updateLocation, 5000);
-
-     setIntervalId(interval)
-
-     return () => BackgroundTimer.clearInterval(intervalId);
-   }, [useNativeAndroidModule]);
+     return () => {
+      Timer.clearInterval(intervalId)
+     };
+   }, []);
 
   const changeGetLocationMethod = () => setUseNativeAndroidModule(useNative => !useNative);
 
