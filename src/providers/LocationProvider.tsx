@@ -1,8 +1,9 @@
 import React, { useState, useEffect, FC, createContext, useContext, ReactNode } from 'react';
-import { PermissionsAndroid, NativeModules, Alert, Linking } from 'react-native';
+import { NativeModules } from 'react-native';
 import GetLocation, { Location } from 'react-native-get-location';
 import { Dirs, FileSystem } from 'react-native-file-access';
-import Timer from "react-native-background-timer-android";
+import ReactNativeForegroundService from '@supersami/rn-foreground-service';
+import { requestLocationPermissions, requestNotificationPermissions } from '../utils/permission-utils';
 
 const { LocationModule, LockDetector } = NativeModules;
 
@@ -32,25 +33,6 @@ export const useLocationContext = () => useContext(LocationContext);
 const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
   const [useNativeAndroidModule, setUseNativeAndroidModule] = useState(true);
   const [location, setLocation] = useState<FileLocation>();
-  const [intervalId, setIntervalId] = useState(0);
-
-  const requestPermissions = async () => {
-    const permissions = await PermissionsAndroid.requestMultiple([
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION
-    ]);
-
-    const areAnyPermissionsDenied = Object.values(permissions).some(permission => permission!== PermissionsAndroid.RESULTS.GRANTED);
-
-    if (areAnyPermissionsDenied) {
-        Alert.alert(
-          'Insufficient Permissions',
-          'Please manually grant "Always Allow" location permission to continue.',
-          [{ text: 'OK', onPress: () => Linking.openSettings()}],
-          { cancelable: false }
-        );
-    }
-  };
 
   const updateLocation = async () => {
     const isLocked = await LockDetector.isDeviceLocked();
@@ -60,6 +42,7 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
     if (useNativeAndroidModule) {
       await LocationModule.getLocation()
       .then((location: Location) => {
+        console.log(location)
         saveLocation(location);
       })
       .catch((error: Error) => {
@@ -72,6 +55,7 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
         timeout: 15000
       })
         .then(location => {
+          console.log(location)
           saveLocation(location);
         })
         .catch(error => {
@@ -107,15 +91,33 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-      requestPermissions();
+      if(!location) {
+        requestLocationPermissions();
+      }
+  }, [location])
+
+  useEffect(() => {
+    requestNotificationPermissions();
   }, [])
 
   useEffect(() => {
-     Timer.setInterval(updateLocation, 5000);
+    ReactNativeForegroundService.add_task(updateLocation,
+      { 
+        delay: 5000,
+        onLoop: true,
+        taskId: "taskid",
+        onError: (error: Error) => console.error(`Error:`, error.stack),
+      }
+    );
 
-     return () => {
-      Timer.clearInterval(intervalId)
-     };
+    ReactNativeForegroundService.start({
+      id: 1243,
+      title: "Location Tracker",
+      message: "Running in the background",
+      icon: "ic_launcher",
+      importance: 'high',
+      visibility: 'public',
+    });
    }, []);
 
   const changeGetLocationMethod = () => setUseNativeAndroidModule(useNative => !useNative);
