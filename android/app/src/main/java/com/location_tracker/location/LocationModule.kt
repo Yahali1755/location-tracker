@@ -15,7 +15,7 @@ import com.google.android.gms.location.LocationServices
 
 class LocationModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
     private var fusedLocationClient: FusedLocationProviderClient
-
+ 
     init {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(reactContext)
     }

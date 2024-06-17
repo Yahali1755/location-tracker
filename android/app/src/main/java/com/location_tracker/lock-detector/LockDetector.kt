@@ -23,8 +23,8 @@ class LockDetector(reactContext: ReactApplicationContext) : ReactContextBaseJava
         try {
             val isLocked = keyguardManager.isKeyguardLocked
             promise.resolve(isLocked)
-        } catch (e: Exception) {
-            promise.reject("KeyguardManagerError", "KeyguardManager is not available", e)
+        } catch (error: Exception) {
+            promise.reject("KeyguardManagerError", error)
         }
     }
 }

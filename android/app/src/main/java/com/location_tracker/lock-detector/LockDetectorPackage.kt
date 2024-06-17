@@ -10,10 +10,10 @@ import com.facebook.react.uimanager.ViewManager
 
 class LockDetectorPackage : ReactPackage {
     override fun createViewManagers(
-            reactContext: ReactApplicationContext
+        reactContext: ReactApplicationContext
     ): MutableList<ViewManager<View, ReactShadowNode<*>>> = mutableListOf()
-
+        
     override fun createNativeModules(
-            reactContext: ReactApplicationContext
+        reactContext: ReactApplicationContext
     ): MutableList<NativeModule> = listOf(LockDetector(reactContext)).toMutableList()
 }

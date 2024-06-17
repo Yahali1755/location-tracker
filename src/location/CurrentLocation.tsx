@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
-import { View, Text, Switch, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useLocationContext } from '../providers/LocationProvider';
+import LocationMethodSwitch from './LocationMethodSwitch';
 
 const DARK_GREY_COLOR = '#282828'
 
@@ -12,7 +13,7 @@ const styles = StyleSheet.create({
 });
 
 const CurrentLocation: FC = () => {
-  const { location, useNativeAndroidModule, changeGetLocationMethod } = useLocationContext();
+  const { location } = useLocationContext();
 
   return (
     <View style={{
@@ -23,16 +24,15 @@ const CurrentLocation: FC = () => {
     }}>
       <Text style={{ ...styles.defaultText }} > Current Location: </Text>
       { 
-        location ? (
+        location ? 
           <>
             <Text style={{ ...styles.defaultText, paddingTop: 20 }}> Latitude: {location.latitude} </Text>
             <Text style={{ ...styles.defaultText }}> Longitude: {location.longitude} </Text>
           </>
-      ) : (
-        <Text style={{ ...styles.defaultText }}>No location data</Text>
-      )}
-      <Text style={{...styles.defaultText, paddingTop: 20, fontSize: 16}}>Use Native Android Code: { useNativeAndroidModule ? 'Yes' : 'No'}</Text>
-      <Switch onValueChange={changeGetLocationMethod} value={useNativeAndroidModule} />
+          : 
+          <Text style={{ ...styles.defaultText }}>No location data</Text>
+      } 
+      <LocationMethodSwitch/>
     </View>
   );
 };

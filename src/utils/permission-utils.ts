@@ -2,8 +2,7 @@ import { Alert, Linking, PermissionsAndroid } from "react-native";
 
 export const requestLocationPermissions = async () => {
     const fineLocationPermission = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {
             title: "Location Permission Required",
             message:
             "This app needs access to your location.",
@@ -13,8 +12,7 @@ export const requestLocationPermissions = async () => {
     );
 
     const backgroundLocationPermission = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION,
-        {
+        PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION, {
             title: "Location Permission Required",
             message:
             'This app needs access to your location, Please grant "Always Allow" location permission to continue.',
@@ -36,11 +34,10 @@ export const requestLocationPermissions = async () => {
 
 export const requestNotificationPermissions = async () => {
     await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-        {
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS, {
           title: "App Notification Permission",
           message: "This app needs access to post notifications.",
           buttonPositive: "OK",
         }
-      );
+    );
 };
