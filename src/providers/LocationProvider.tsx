@@ -87,12 +87,8 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
         console.error(error);
       });
 
-  const updateLocation = async () => {
-    const isLocked = await LockDetector.isDeviceLocked();
-
-    console.log(isLocked)
-
-    if (!useNativeAndroidModule) {
+  const updateLocation = () => {
+    if (useNativeAndroidModule) {
       updateLocationByAndroidModule()
     }
     else {

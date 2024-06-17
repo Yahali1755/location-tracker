@@ -1,13 +1,13 @@
 import React, { FC } from 'react';
 
-import LocationProvider from './src/providers/LocationProvider';
 import CurrentLocation from './src/location/CurrentLocation';
+import Providers from './src/providers/Providers';
 
 const App: FC = () => {
   return (
-    <LocationProvider>
+    <Providers>
       <CurrentLocation/>
-    </LocationProvider>
+    </Providers>
   );
 }
 
