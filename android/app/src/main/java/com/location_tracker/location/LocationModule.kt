@@ -1,14 +1,6 @@
 package com.location_tracker
 
-import com.facebook.react.bridge.NativeModule
-import com.facebook.react.bridge.ReactApplicationContext
-import com.facebook.react.bridge.ReactContext
-import com.facebook.react.bridge.ReactContextBaseJavaModule
-import com.facebook.react.bridge.ReactMethod
-import android.Manifest
-import android.content.pm.PackageManager
 import android.location.Location
-import androidx.core.app.ActivityCompat
 import com.facebook.react.bridge.*
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -36,7 +28,7 @@ class LocationModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
                         promise.resolve(map)
                     } else {
-                        promise.reject("LOCATION_ERROR", "Unable to get location")
+                        promise.reject("LOCATION_ERROR", "Unable to get the location")
                     }
                 }
     }

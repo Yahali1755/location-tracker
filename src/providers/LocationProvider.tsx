@@ -99,12 +99,11 @@ const LocationProvider: FC<LocationProviderProps> = ({ children }) => {
   useEffect(() => {
       if(!location) {
         requestLocationPermissions();
+        requestNotificationPermissions();
       }
   }, [location])
 
   useEffect(() => {
-    requestNotificationPermissions();
-
     ReactNativeForegroundService.add_task(updateLocation, { 
         delay: 5000,
         onLoop: true,
